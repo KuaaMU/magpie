@@ -1,0 +1,29 @@
+{
+  "summary": "「设置 → 常规」里 Codex 子代理一行的名称与说明文案被改写（描述更强调 Codex 自身的 multi_agent_v2 仍然优先、需自行关掉），并在该行新增一个默认隐藏的警告元素 #codexAgentsV1Warn：当 Codex 自己的 multi_agent_v2 在 magpie 接管的配置里开着时，设置响应带 notice，这一行和 Toast 都会显示提示；magpie 不改写该配置。",
+  "scenes": [
+    {
+      "title": "设置里的 Codex 子代理行",
+      "shots": [
+        {
+          "file": "01-codex-subagents-row.png",
+          "caption": "设置 → 常规：Codex 子代理一行的名称、说明与开关",
+          "width": 2560
+        },
+        {
+          "file": "02-codex-subagents-on.png",
+          "caption": "开启后的一行：开关状态，以及是否出现警告行或提示",
+          "width": 2560
+        }
+      ]
+    }
+  ],
+  "video": "preview.mp4",
+  "poster": "poster.png",
+  "errors": [],
+  "leak": false,
+  "skipped": null,
+  "mismatch": "描述说这个 PR 会把 features.multi_agent_v2 = false 写进 magpie 已经接管的 Codex 配置，并用原子 stash 记住用户原值、在设置或路由消失时还原、不覆盖手改值、损坏则 fail closed（还列出 internal/agent/stash.go 为改动文件）；diff 里没有这些写入/还原/stash 逻辑（stash.go 未出现在 diff 中），实际只读配置判断冲突并显示提示，明确不写配置。",
+  "unseen": "沙盒里 Codex 是全新安装、配置里没有 features.multi_agent_v2 = true，且「Codex 子代理可用其他模型」当前为关闭，因此 #codexAgentsV1Warn 的警告文案和切换开关后的警告提示条都无法在这里出现；也看不到「magpie 写入/还原 Codex 配置」的任何效果，因为 diff 本身不做写入。",
+  "interactive": true,
+  "pages": 1
+}

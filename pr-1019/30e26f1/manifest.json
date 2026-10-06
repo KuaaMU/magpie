@@ -1,0 +1,29 @@
+{
+  "summary": "Sessions 列表一端：GET /api/sessions 在调用方不传 limit 时不再回退到 sessions.Limit（200）而是读全部会话，页面把列表按每页 200 行分页绘制，多出「显示其余 N 个」按钮，列表下方的说明也改成按当前筛选出的列表计数（显示 X 个中的 Y 个，或整段列表的 N 个会话）。",
+  "scenes": [
+    {
+      "title": "会话页的列表与下方计数",
+      "shots": [
+        {
+          "file": "01-sessions-tab.png",
+          "caption": "「会话」标签：会话列表与它下方的说明",
+          "width": 2560
+        },
+        {
+          "file": "02-sessions-note.png",
+          "caption": "列表下方的说明：它按什么数这些会话",
+          "width": 2560
+        }
+      ]
+    }
+  ],
+  "video": "preview.mp4",
+  "poster": "poster.png",
+  "errors": [],
+  "leak": false,
+  "skipped": null,
+  "mismatch": "",
+  "unseen": "沙箱里本机 Agent 都是新装的，会话文件远少于 200 个（很可能一个也没有），所以「显示其余 N 个」分页按钮和说明里的「显示 X 个中的 Y 个 / 2500 个中的 200 个」这类分页计数在镜头里不会出现；这一页只能看到新的说明写法本身。CLI 与 TUI 的同一处改动不在浏览器里，拍不到。",
+  "interactive": true,
+  "pages": 1
+}

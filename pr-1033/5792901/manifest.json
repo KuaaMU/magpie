@@ -1,0 +1,34 @@
+{
+  "summary": "Go 侧新增 Reasonix 本地会话适配；界面上的可见改动是会话行与会话详情在用量不完整时多出一行「用量历史不完整」提示（会话行同时给 token 数字加了说明性 title），并为中/日/德补齐了这两条文案。",
+  "scenes": [
+    {
+      "title": "会话页：会话行与详情",
+      "shots": [
+        {
+          "file": "01-sessions-list.png",
+          "caption": "会话页：Agent 条与下面的会话列表",
+          "width": 2560
+        }
+      ]
+    },
+    {
+      "title": "用量 › 会话标签页",
+      "shots": [
+        {
+          "file": "02-usage-sessions.png",
+          "caption": "「用量 › 会话」里的会话列表",
+          "width": 2560
+        }
+      ]
+    }
+  ],
+  "video": "preview.mp4",
+  "poster": "poster.png",
+  "errors": [],
+  "leak": false,
+  "skipped": null,
+  "mismatch": "",
+  "unseen": "沙盒里只装了新的 Agent、没有任何 Reasonix 本地会话，所以会话列表和「用量 › 会话」里都不会出现 Reasonix 行：看不到「用量历史不完整」标签、看不到 2.x 会话按 modelRef 显示的模型名（flash/pro），也看不到 token 显示为「—」、以及鼠标悬停 token 数字时的那条说明。下面只展示这些内容本应出现的位置。",
+  "interactive": true,
+  "pages": 2
+}

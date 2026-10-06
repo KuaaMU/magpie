@@ -1,0 +1,39 @@
+{
+  "summary": "app.js 在进入/直开「用量」时会一并读取 providers 状态（原来只拉用量），并把 renderLedger 里遮挡模块级 providers 的同名局部变量改名为 provOpts；于是「用量 · 请求」栏右上角的请求档案开关会按真实网关状态画出来，而不是永远隐藏。",
+  "scenes": [
+    {
+      "title": "「用量 · 请求」栏右上角的档案开关",
+      "shots": [
+        {
+          "file": "01-requests-header-archive-switch.png",
+          "caption": "「请求」栏右上角",
+          "width": 1120
+        },
+        {
+          "file": "02-requests-archive-switch-on.png",
+          "caption": "打开开关之后的「请求」栏",
+          "width": 2560
+        }
+      ]
+    },
+    {
+      "title": "从别的页切回「用量」时的同一处",
+      "shots": [
+        {
+          "file": "03-usage-via-nav-requests-header.png",
+          "caption": "从「供应商」切回后，「请求」栏右上角",
+          "width": 2560
+        }
+      ]
+    }
+  ],
+  "video": "preview.mp4",
+  "poster": "poster.png",
+  "errors": [],
+  "leak": false,
+  "skipped": null,
+  "mismatch": "",
+  "unseen": "描述里「gateway 为 null 的实例（Web 网关模式）上开关不出现」这条路径没有对应场景：本沙盒的网关正在运行。",
+  "interactive": true,
+  "pages": 3
+}

@@ -1,0 +1,41 @@
+{
+  "summary": "用量 › 请求页在汇总行下新增三个可点的来源格子（全部请求 / 经过 magpie / 不经过 magpie），点击即按来源筛选，选择状态写在 aria-pressed 上，并支持 ?via=through|direct 深链；此外来自会话文件的行在「供应商·账号」列改为显示会话文件里记的供应商 id（有账号时账号优先），其角标提示也相应区分。",
+  "scenes": [
+    {
+      "title": "请求页的来源三格与按来源筛选",
+      "shots": [
+        {
+          "file": "01-via-cells.png",
+          "caption": "请求页汇总行下面的三个来源格子：全部请求、经过 magpie、不经过 magpie",
+          "width": 2560
+        },
+        {
+          "file": "02-via-through.png",
+          "caption": "选中「经过 magpie」后的请求列表与三格的状态",
+          "width": 2560
+        },
+        {
+          "file": "03-via-direct.png",
+          "caption": "选中「不经过 magpie」后的请求列表",
+          "width": 2560
+        },
+        {
+          "file": "04-via-all.png",
+          "caption": "回到「全部请求」后的请求列表",
+          "width": 2560
+        }
+      ]
+    }
+  ],
+  "video": "preview.mp4",
+  "poster": "poster.png",
+  "errors": [
+    "请求页的来源三格与按来源筛选 · shot #usagePane: nothing visible matches #usagePane (1 in the page)"
+  ],
+  "leak": false,
+  "skipped": null,
+  "mismatch": "描述里提到的请求档案开关修复（#949）、速度图引线（#950）、Sessions 列表长度（#951）以及概览页「网关调用」KPI 的去留，都不在本 diff 里，UI 上也没有对应变化。",
+  "unseen": "本沙箱只有经网关发出的几次调用、Agent 都是新装的（没有会话文件），所以三格中「不经过 magpie」为 0：会话文件行在「供应商·账号」列显示文件记录的供应商 id、以及随之改变的角标提示，都看不到；能看到的是三格本身与其按来源筛选。",
+  "interactive": true,
+  "pages": 1
+}
