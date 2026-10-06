@@ -2677,7 +2677,6 @@
     newBtn.append(svg(PLUS, 11, 1.8), el("span", "", t("New group")));
     newBtn.onclick = () => newGroup();
     const head = [el("span", "label", t("Routing groups")), el("span", "grow"), el("span", "note", t("models agents pick as one"))];
-    const typing = document.activeElement === gQ, [a, b] = [gQ.selectionStart, gQ.selectionEnd];
     if (all.length > 1 || gQ.value) {
       gQ.placeholder = t("Filter groups and models");
       gQ.setAttribute("aria-label", gQ.placeholder);
@@ -2696,8 +2695,26 @@
       }
       head.push(newBtn);
     }
-    gHead.replaceChildren(...head);
-    if (typing && gQ.isConnected) { gQ.focus({ preventScroll: true }); try { gQ.setSelectionRange(a, b); } catch {} }
+    // what the header is made of doesn't change as one types in it, and
+    // rebuilding it took the box the reader was typing in out of the document
+    // on every keystroke, to be put back and refocused by hand. The caret went
+    // with it, and on WebKit — what macOS and WebKitGTK run — one press then
+    // wrote two characters. So the header is left alone while it is already the
+    // one asked for, which is every keystroke: what it is made of is compared
+    // by kind, not by node, as the nodes are new each time. When it does
+    // change — a group removed takes Select and New group with it, and with
+    // the last group gone the box itself goes — it is built as before, and a
+    // box that is still there is focused and put back where it was.
+    const shape = (ns) => [...ns].map((n) => n.className || n.tagName).join(" ");
+    const typing = document.activeElement === gQ && gQ.isConnected && gHead.contains(gQ);
+    const a = gQ.selectionStart, b = gQ.selectionEnd;
+    if (shape(head) !== shape(gHead.children)) {
+      gHead.replaceChildren(...head);
+      if (typing && gQ.isConnected && gHead.contains(gQ)) {
+        gQ.focus({ preventScroll: true });
+        try { gQ.setSelectionRange(a, b); } catch {}
+      }
+    }
     drawFound();
     drawNames();
     const rows = [];
