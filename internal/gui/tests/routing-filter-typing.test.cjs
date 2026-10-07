@@ -227,7 +227,9 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
 
         // the same way a language change arrives: the page's lang attribute moves
         await page.evaluate((l) => setLocale(l), other);
-        await page.waitForFunction((l) => document.documentElement.lang === l, { zh: "zh-CN", ja: "ja-JP", de: "de-DE", en: "en" }[other]);
+        // waited on the header, not on <html lang>: setLocale() sets that
+        // before it translates, so waiting on it can read the header too early
+        await page.waitForFunction((want) => document.querySelector(".rt-ghead .label")?.textContent === want, want[0]);
 
         assert.deepEqual((await said()).map((s) => s?.trim()), want, `the header did not say itself in ${other}`);
         assert.equal(await q.inputValue(), "12", `a change to ${other} lost what was typed`);
