@@ -11651,6 +11651,8 @@ function renderKeyAccounts(p) {
 // matches, KEYS_PAGE at most, so hundreds of rows are never drawn at once.
 const KEYS_FOLD = 8, KEYS_FIRST = 5, KEYS_PAGE = 50;
 let keysOpen = {}; // provider id → { q } while its whole list is open
+// provider id → the filter box while its list is open, kept across redraws
+let keyFilters = {};
 function keyFold(p) {
   const all = p.keyList;
   if (all.length <= KEYS_FOLD) return { shown: all, folded: false };
@@ -11693,20 +11695,34 @@ function keyFoldRows(p, fold) {
   const after = [];
   const bar = el("div", "keys-tools");
   bar.dataset.provider = p.id;
-  const q = input(keysOpen[p.id].q, t("Filter {n} keys — name, key, off, resting…", { n: all.length }));
-  q.className = "keys-filter";
-  q.dataset.provider = p.id;
-  q.setAttribute("aria-label", q.placeholder);
-  q.oninput = () => {
-    keysOpen[p.id].q = q.value;
-    const at = q.selectionStart;
-    renderProviders();
-    focusKeyFilter(p.id, at);
-  };
-  q.onkeydown = (e) => { e.stopPropagation(); if (e.key === "Escape") { if (q.value) q.oninput(q.value = ""); else { delete keysOpen[p.id]; renderProviders(); } } };
+  // The filter is one box for as long as the list is open, not one per
+  // keystroke: its own input event calls renderProviders(), which replaces
+  // every row, so making the box afresh took the one being typed in out of
+  // the document on every press. The caret went with it, and a composition
+  // committing while the box was detached wrote the character twice — in
+  // Chromium as much as WebKit (#1055). So it is built once per list and put
+  // back where it belongs; it keeps its text, its focus and its caret.
+  let q = keyFilters[p.id];
+  if (!q) {
+    q = input("", "");
+    q.className = "keys-filter";
+    q.dataset.provider = p.id;
+    q.oninput = () => {
+      keysOpen[p.id].q = q.value;
+      const at = q.selectionStart;
+      renderProviders();
+      focusKeyFilter(p.id, at);
+    };
+    q.onkeydown = (e) => { e.stopPropagation(); if (e.key === "Escape") { if (q.value) q.oninput(q.value = ""); else { delete keysOpen[p.id]; delete keyFilters[p.id]; renderProviders(); } } };
+    keyFilters[p.id] = q;
+  }
+  q.value = keysOpen[p.id].q;
+  const ph = t("Filter {n} keys — name, key, off, resting…", { n: all.length });
+  q.placeholder = ph;
+  q.setAttribute("aria-label", ph);
   const count = el("span", "hint keys-count", fold.matched.length === all.length ? t("{n} keys", { n: all.length }) : t("{n} of {m} keys", { n: fold.matched.length, m: all.length }));
   const fewer = el("button", "text", t("Show fewer"));
-  fewer.onclick = () => { delete keysOpen[p.id]; renderProviders(); };
+  fewer.onclick = () => { delete keysOpen[p.id]; delete keyFilters[p.id]; renderProviders(); };
   bar.append(q, count, el("span", "grow"));
   // removing many at once: those turned off, those failing for good, or
   // those the filter matches; the confirmation names them before they go

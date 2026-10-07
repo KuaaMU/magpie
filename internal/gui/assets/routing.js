@@ -2651,14 +2651,37 @@
   // Discord: they could only be removed one at a time); null otherwise
   let gSel = null;
   // gQ: the groups filtered by name and by the models in them, as many
-  // as there may be (PAMI on Discord); kept across redraws, and focused
-  // again when one comes while typing
+  // as there may be (PAMI on Discord); it stays where it is, and the header
+  // around it is built once below
   const gQ = el("input", "sess-filter rt-gfilter");
   gQ.type = "search";
   gQ.spellcheck = false;
   gQ.autocomplete = "off";
   gQ.oninput = () => renderGroups();
   gQ.onkeydown = (e) => { if (e.key === "Escape" && gQ.value) { e.stopPropagation(); gQ.value = ""; renderGroups(); } };
+  // The header is built once, here, and never rebuilt: drawGroups() runs
+  // synchronously from the filter's own input event, so replacing what the
+  // header is made of took the box being typed in out of the document on
+  // every keystroke and put it back by hand. The caret went with it, and a
+  // composition committing while the box was detached wrote the character
+  // twice — reproducible in Chromium, so not WebKit's doing (#1055). So the
+  // filter never moves at all: what is not wanted is hidden rather than
+  // removed, and the words are put back on every draw, so a change of
+  // language is not left out of a header that is never rebuilt.
+  const gHeadLabel = el("span", "label");
+  const gHeadNote = el("span", "note");
+  const gSelectBtn = el("button", "text rt-gselect");
+  gSelectBtn.type = "button";
+  gSelectBtn.onclick = async () => {
+    if (groupDirty() && !(await confirmDiscard())) return;
+    gEdit = null; gSel = new Set(); renderGroups();
+  };
+  const gNewBtn = el("button", "text rt-gnew");
+  gNewBtn.type = "button";
+  gNewBtn.append(svg(PLUS, 11, 1.8), el("span", ""));
+  gNewBtn.onclick = () => newGroup();
+  gHead.append(gHeadLabel, el("span", "grow"), gHeadNote, gQ, gSelectBtn, gNewBtn);
+  gHead.classList.add("rt-ghead");
   // groupMatches: every word of the filter in the group's name, id, or a
   // member's id or label (its provider and model names)
   function groupMatches(g, words) {
@@ -2672,49 +2695,24 @@
     const shown = words.length ? all.filter((g) => gEdit?.id === g.id || groupMatches(g, words)) : all;
     if (gSel) gSel = new Set([...gSel].filter((id) => shown.some((g) => g.id === id)));
     if (gSel && !all.length) gSel = null;
-    const newBtn = el("button", "text rt-gnew");
-    newBtn.type = "button";
-    newBtn.append(svg(PLUS, 11, 1.8), el("span", "", t("New group")));
-    newBtn.onclick = () => newGroup();
-    const head = [el("span", "label", t("Routing groups")), el("span", "grow"), el("span", "note", t("models agents pick as one"))];
+    // What the header says is put back on every draw, and what it holds is
+    // hidden rather than taken away: see where it is built. That way a change
+    // of language is not left out of a header that is never rebuilt, and the
+    // box keeps its place, its text, its focus and its caret while it is
+    // typed in. What belongs beside it: nothing to filter and no filter text
+    // means no box; picking takes Select and New group away with it.
+    gHeadLabel.textContent = t("Routing groups");
+    gHeadNote.textContent = t("models agents pick as one");
+    gNewBtn.lastChild.textContent = t("New group");
+    gSelectBtn.textContent = t("Select");
+    gSelectBtn.title = t("Pick several groups to remove together");
     if (all.length > 1 || gQ.value) {
       gQ.placeholder = t("Filter groups and models");
       gQ.setAttribute("aria-label", gQ.placeholder);
-      head.push(gQ);
     }
-    if (!gSel) {
-      // several removed at once: pick them, then Remove
-      if (all.length > 1) {
-        const pick = el("button", "text rt-gselect", t("Select"));
-        pick.title = t("Pick several groups to remove together");
-        pick.onclick = async () => {
-          if (groupDirty() && !(await confirmDiscard())) return;
-          gEdit = null; gSel = new Set(); renderGroups();
-        };
-        head.push(pick);
-      }
-      head.push(newBtn);
-    }
-    // what the header is made of doesn't change as one types in it, and
-    // rebuilding it took the box the reader was typing in out of the document
-    // on every keystroke, to be put back and refocused by hand. The caret went
-    // with it, and on WebKit — what macOS and WebKitGTK run — one press then
-    // wrote two characters. So the header is left alone while it is already the
-    // one asked for, which is every keystroke: what it is made of is compared
-    // by kind, not by node, as the nodes are new each time. When it does
-    // change — a group removed takes Select and New group with it, and with
-    // the last group gone the box itself goes — it is built as before, and a
-    // box that is still there is focused and put back where it was.
-    const shape = (ns) => [...ns].map((n) => n.className || n.tagName).join(" ");
-    const typing = document.activeElement === gQ && gQ.isConnected && gHead.contains(gQ);
-    const a = gQ.selectionStart, b = gQ.selectionEnd;
-    if (shape(head) !== shape(gHead.children)) {
-      gHead.replaceChildren(...head);
-      if (typing && gQ.isConnected && gHead.contains(gQ)) {
-        gQ.focus({ preventScroll: true });
-        try { gQ.setSelectionRange(a, b); } catch {}
-      }
-    }
+    gQ.hidden = !(all.length > 1 || gQ.value);
+    gSelectBtn.hidden = !!gSel || all.length <= 1;
+    gNewBtn.hidden = !!gSel;
     drawFound();
     drawNames();
     const rows = [];

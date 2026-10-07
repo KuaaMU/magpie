@@ -91,12 +91,10 @@
     for (const l of listings || []) if (npm[l.package]) l.npm = npm[l.package];
     for (const e of mine?.plugins || []) if (onNPM(e.spec) && npm[name(e.spec)]?.version) e.latest = npm[name(e.spec)].version;
   }
-  // redrawn as a part comes: the search field keeps its focus
+  // redrawn as a part comes: the search field is the same node it always was,
+  // so it keeps its focus and its caret on its own
   function redraw() {
-    const q = page.querySelector(".pm-find input");
-    const typing = q && document.activeElement === q;
     draw();
-    if (typing) page.querySelector(".pm-find input")?.focus({ preventScroll: true });
   }
   async function loadMine() {
     try {
@@ -152,6 +150,7 @@
     clearTimeout(searchTimer);
     hits = q.trim().length >= 2 ? { q: q.trim(), loading: true } : null;
     if (hits) searchNPM(hits.q);
+    findQ.value = q;
     draw();
   };
 
@@ -429,6 +428,30 @@
     return box;
   }
 
+  // The search box is made once and kept, not made again on every draw: the
+  // input event and the redraw that follows a part arriving both redrew the
+  // header, which made the box afresh and put it back with a hand-written
+  // focus(). The caret went with it, and a composition committing while the
+  // box was detached wrote the character twice (#1055). So head() takes the
+  // box it is given and says it again in the page's language.
+  const findQ = el("input");
+  findQ.type = "search";
+  findQ.spellcheck = false;
+  findQ.autocomplete = "off";
+  findQ.oninput = () => {
+    query = findQ.value;
+    if (tab !== "discover") { tab = "discover"; draw(); }
+    clearTimeout(searchTimer);
+    const s = query.trim();
+    if (s.length < 2) hits = null;
+    else {
+      hits = { q: s, loading: true };
+      searchTimer = setTimeout(() => searchNPM(s), 350);
+    }
+    drawBody();
+  };
+  findQ.onkeydown = (ev) => { ev.stopPropagation(); if (ev.key === "Escape" && findQ.value) { findQ.value = ""; findQ.oninput(); } };
+
   function head() {
     const h = el("div", "lib-head pm-head");
     const n = mine?.plugins?.length || 0;
@@ -440,27 +463,10 @@
     tabs.classList.add("lib-tabs");
     const find = el("label", "pm-find");
     find.append(glyph(SEARCH, 13, 1.6));
-    const q = el("input");
-    q.type = "search";
-    q.placeholder = t("Search plugins and npm…");
-    q.value = query;
-    q.spellcheck = false;
-    q.autocomplete = "off";
-    q.setAttribute("aria-label", t("Search plugins"));
-    q.oninput = () => {
-      query = q.value;
-      if (tab !== "discover") { tab = "discover"; draw(); page.querySelector(".pm-find input")?.focus(); }
-      clearTimeout(searchTimer);
-      const s = query.trim();
-      if (s.length < 2) hits = null;
-      else {
-        hits = { q: s, loading: true };
-        searchTimer = setTimeout(() => searchNPM(s), 350);
-      }
-      drawBody();
-    };
-    q.onkeydown = (ev) => { ev.stopPropagation(); if (ev.key === "Escape" && q.value) { q.value = ""; q.oninput(); } };
-    find.append(q);
+    const ph = t("Search plugins and npm…");
+    findQ.placeholder = ph;
+    findQ.setAttribute("aria-label", t("Search plugins"));
+    find.append(findQ);
     h.append(tabs, el("span", "grow"), mirrorSwitch(), find);
     h.classList.toggle("stuck", page.scrollTop > 0);
     return h;
