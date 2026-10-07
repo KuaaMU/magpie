@@ -94,7 +94,9 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
         return [...s.children].map((c) => c.className);
       });
       // (the names in agents' lists, for every group, between them)
-      assert.deepEqual(order.slice(0, 4), ["row-head", "rt-gfound", "rt-gnames", "list rt-groups"]);
+      // the head also carries rt-ghead, so the groups' own header can be told
+      // from the pools' (both are a .row-head, and #1056 needs one of them)
+      assert.deepEqual(order.slice(0, 4), ["row-head rt-ghead", "rt-gfound", "rt-gnames", "list rt-groups"]);
       const border = await sw.evaluate((e) => { const c = getComputedStyle(e); return c.borderLeftWidth !== c.borderRightWidth || c.borderLeftColor !== c.borderRightColor; });
       assert.equal(border, false, "no left-border accent");
 

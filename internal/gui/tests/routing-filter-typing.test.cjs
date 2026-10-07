@@ -11,9 +11,10 @@
 // - While the filter holds the keyboard it is the very same box throughout:
 //   not taken out of the document, still focused, caret following the text,
 //   and one key press putting in exactly one character.
-// - What the header is made of still changes when it should: with nothing to
-//   filter there is no box at all, and with two groups Select and New group
-//   are there beside it.
+// - What the header shows changes when it should: with nothing to filter there
+//   is no filter showing, and with two groups Select and New group are there
+//   beside the box. What is not wanted is hidden rather than taken out of the
+//   header, so these ask what is showing, not what is in the document.
 // - A composition committing under an IME puts in one character, in Chromium,
 //   where on main it puts in two.
 // - The header still says it in the page's language after a change of language.
@@ -90,6 +91,16 @@ async function open(t, engine, lang, list) {
   return { page, errors };
 }
 
+// What the groups' header shows beside the box, in order. It asks what is
+// displayed rather than what is in the document, because routing.js hides what
+// is not wanted instead of taking it out — the box has to keep its place — so
+// a hidden child is there and is not showing, and only the second is a change
+// the reader can see.
+const headShows = (page) =>
+  page.locator(".rt-ghead").evaluate((h) =>
+    [...h.children].filter((c) => getComputedStyle(c).display !== "none").map((c) => c.className || c.tagName)
+  );
+
 for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium", "webkit"])) {
   for (const lang of ["en", "zh"]) {
     const w = words[lang];
@@ -158,16 +169,17 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
       assert.equal(await at(), before, "the filter moved the page");
 
       // Select and New group are still there beside it
-      const head = await page.locator(".rt-ghead").evaluate((h) => [...h.children].map((c) => c.className || c.tagName));
-      assert.deepEqual(head.filter((c) => /rt-gfilter|rt-gselect|rt-gnew/.test(c)), ["sess-filter rt-gfilter", "text rt-gselect", "text rt-gnew"], "the header lost or reordered what sits beside the box");
+      assert.deepEqual((await headShows(page)).filter((c) => /rt-gfilter|rt-gselect|rt-gnew/.test(c)), ["sess-filter rt-gfilter", "text rt-gselect", "text rt-gnew"], "the header lost or reordered what sits beside the box");
       assert.deepEqual(errors, []);
     });
 
     test(`${engine} ${lang}: one group leaves nothing to filter, so no filter`, async (t) => {
       const { page, errors } = await open(t, engine, lang, oneGroup);
-      assert.equal(await page.locator(".rt-gsec .row-head input.rt-gfilter").count(), 0, "there is a filter with nothing to filter");
-      assert.equal(await page.locator(".rt-gnew").count(), 1, "New group is gone");
-      assert.equal(await page.locator(".rt-gselect").count(), 0, "Select is there with one group");
+      // what is not wanted is hidden rather than taken out of the header, so
+      // this asks what is showing: what is there but hidden is not a filter
+      assert.equal(await page.locator(".rt-gsec .row-head input.rt-gfilter").isHidden(), true, "there is a filter with nothing to filter");
+      assert.equal(await page.locator(".rt-gnew").isVisible(), true, "New group is gone");
+      assert.equal(await page.locator(".rt-gselect").isHidden(), true, "Select is there with one group");
       assert.deepEqual(errors, []);
     });
 
@@ -180,8 +192,7 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
       const { page, errors } = await open(t, engine, lang, threeGroups);
       const q = page.locator(".rt-gsec .row-head input.rt-gfilter");
       await q.waitFor();
-      const head = () => page.locator(".rt-ghead").evaluate((h) => [...h.children].map((c) => c.className || c.tagName));
-      assert.deepEqual((await head()).filter((c) => /rt-gfilter|rt-gselect|rt-gnew/.test(c)), ["sess-filter rt-gfilter", "text rt-gselect", "text rt-gnew"]);
+      assert.deepEqual((await headShows(page)).filter((c) => /rt-gfilter|rt-gselect|rt-gnew/.test(c)), ["sess-filter rt-gfilter", "text rt-gselect", "text rt-gnew"]);
 
       await q.click();
       await page.keyboard.type("1");
@@ -190,7 +201,7 @@ for (const engine of (process.env.BROWSER ? [process.env.BROWSER] : ["chromium",
       // .click() dispatches without moving focus, so this is the header changing
       // shape underneath the keyboard: picking takes Select and New group away.
       await page.locator(".rt-gselect").evaluate((b) => b.click());
-      assert.deepEqual((await head()).filter((c) => /rt-gfilter|rt-gselect|rt-gnew/.test(c)), ["sess-filter rt-gfilter"], "the header kept Select and New group while picking");
+      assert.deepEqual((await headShows(page)).filter((c) => /rt-gfilter|rt-gselect|rt-gnew/.test(c)), ["sess-filter rt-gfilter"], "the header kept Select and New group while picking");
       assert.equal(await page.locator(".rt-group .rt-gpick").count(), 3, "picking did not take hold");
       assert.equal(await q.inputValue(), "1", "the header changing lost what was typed");
       assert.equal(await page.evaluate(() => document.activeElement === document.querySelector(".rt-gfilter")), true, "the keyboard left the filter");
